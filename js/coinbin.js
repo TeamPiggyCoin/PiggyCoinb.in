@@ -34,6 +34,7 @@ $(document).ready(function() {
 
 					$("#walletKeys .privkey").val(keys.wif);
 					$("#walletKeys .pubkey").val(keys.pubkey);
+					$("#walletKeys .privkeyaes").val(CryptoJS.AES.encrypt(keys.wif, pass));
 
 					$("#openLogin").hide();
 					$("#openWallet").removeClass("hidden").show();
@@ -205,7 +206,7 @@ $(document).ready(function() {
 	});
 
 	$("#walletSpendTo .addressAdd").click(function(){
-		var clone = '<div class="form-inline output">'+$(this).parent().html()+'</div>';
+		var clone = '<div class="form-horizontal output">'+$(this).parent().html()+'</div>';
 		$("#walletSpendTo").append(clone);
 		$("#walletSpendTo .glyphicon-plus:last").removeClass('glyphicon-plus').addClass('glyphicon-minus');
 		$("#walletSpendTo .glyphicon-minus:last").parent().removeClass('addressAdd').addClass('addressRemove');
@@ -249,6 +250,18 @@ $(document).ready(function() {
 		$("#newBitcoinAddress").val(coin.address);
 		$("#newPubKey").val(coin.pubkey);
 		$("#newPrivKey").val(coin.wif);
+
+		/* encrypted key code */
+		if((!$("#encryptKey").is(":checked")) || $("#aes256pass").val()==$("#aes256pass_confirm").val()){
+			$("#aes256passStatus").addClass("hidden");
+			if($("#encryptKey").is(":checked")){
+				$("#aes256wifkey").removeClass("hidden");
+			}
+		} else {
+			$("#aes256passStatus").removeClass("hidden");
+		}
+		$("#newPrivKeyEnc").val(CryptoJS.AES.encrypt(coin.wif, $("#aes256pass").val())+'');
+
 	});
 
 	$("#newBrainwallet").click(function(){
@@ -256,6 +269,14 @@ $(document).ready(function() {
 			$("#brainwallet").removeClass("hidden");
 		} else {
 			$("#brainwallet").addClass("hidden");
+		}
+	});
+
+	$("#encryptKey").click(function(){
+		if($(this).is(":checked")){
+			$("#aes256passform").removeClass("hidden");
+		} else {
+			$("#aes256wifkey, #aes256passform, #aes256passStatus").addClass("hidden");
 		}
 	});
 
@@ -289,6 +310,7 @@ $(document).ready(function() {
 			var multisig =  coinjs.pubkeys2MultisigAddress(keys, sigsNeeded);
 			$("#multiSigData .address").val(multisig['address']);
 			$("#multiSigData .script").val(multisig['redeemScript']);
+			$("#multiSigData .scriptUrl").val(document.location.origin+''+document.location.pathname+'?verify='+multisig['redeemScript']+'#verify');
 			$("#multiSigData").removeClass('hidden').addClass('show').fadeIn();
 			$("#releaseCoins").removeClass('has-error');
 		} else {
@@ -298,7 +320,7 @@ $(document).ready(function() {
 
 	$("#multisigPubKeys .pubkeyAdd").click(function(){
 		if($("#multisigPubKeys .pubkeyRemove").length<14){
-			var clone = '<div class="form-inline">'+$(this).parent().html()+'</div>';
+			var clone = '<div class="form-horizontal">'+$(this).parent().html()+'</div>';
 			$("#multisigPubKeys").append(clone);
 			$("#multisigPubKeys .glyphicon-plus:last").removeClass('glyphicon-plus').addClass('glyphicon-minus');
 			$("#multisigPubKeys .glyphicon-minus:last").parent().removeClass('pubkeyAdd').addClass('pubkeyRemove');
@@ -306,6 +328,32 @@ $(document).ready(function() {
 			$("#multisigPubKeys .pubkeyRemove").click(function(){
 				$(this).parent().fadeOut().remove();
 			});
+		}
+	});
+
+	/* new -> Hd address code */
+
+	$(".deriveHDbtn").click(function(){
+		$("#verifyScript").val($("input[type='text']",$(this).parent().parent()).val());
+		window.location = "#verify";
+		$("#verifyBtn").click();
+	});
+
+	$("#newHDKeysBtn").click(function(){
+		coinjs.compressed = true;
+		var s = ($("#newHDBrainwallet").is(":checked")) ? $("#HDBrainwallet").val() : null;
+		var hd = coinjs.hd();
+		var pair = hd.master(s);
+		$("#newHDxpub").val(pair.pubkey);
+		$("#newHDxprv").val(pair.privkey);
+
+	});
+
+	$("#newHDBrainwallet").click(function(){
+		if($(this).is(":checked")){
+			$("#HDBrainwallet").removeClass("hidden");
+		} else {
+			$("#HDBrainwallet").addClass("hidden");
 		}
 	});
 
@@ -360,9 +408,19 @@ $(document).ready(function() {
 			}
 		});
 
+		$("#recipients .row").removeClass('has-error');
+
 		$.each($("#recipients .row"), function(i,o){
-			if($(".address",o).val()!="" && $(".amount",o).val()!=""){
-				tx.addoutput($(".address",o).val(), $(".amount",o).val());
+			var a = ($(".address",o).val());
+			var ad = coinjs.addressDecode(a);
+			if(((a!="") && (ad.version == coinjs.pub || ad.version == coinjs.multisig)) && $(".amount",o).val()!=""){ // address
+				tx.addoutput(a, $(".amount",o).val());
+			} else if (((a!="") && ad.version === 42) && $(".amount",o).val()!=""){ // stealth address
+				tx.addstealth(ad, $(".amount",o).val());
+			} else if (((($("#opReturn").is(":checked")) && a.match(/^[a-f0-9]+$/ig)) && a.length<160) && (a.length%2)==0) { // data
+				tx.adddata(a);
+			} else { // neither address nor data
+				$(o).addClass('has-error');
 			}
 		});
 
@@ -383,6 +441,71 @@ $(document).ready(function() {
 	}).keyup(function(){
 		totalInputAmount();
 	});
+
+	/* code for the qr code scanner */
+
+	$(".qrcodeScanner").click(function(){
+		if ((typeof MediaStreamTrack === 'function') && typeof MediaStreamTrack.getSources === 'function'){
+			MediaStreamTrack.getSources(function(sourceInfos){
+				var f = 0;
+				$("select#videoSource").html("");
+				for (var i = 0; i !== sourceInfos.length; ++i) {
+					var sourceInfo = sourceInfos[i];
+					var option = document.createElement('option');
+					option.value = sourceInfo.id;
+					if (sourceInfo.kind === 'video') {
+						option.text = sourceInfo.label || 'camera ' + ($("select#videoSource options").length + 1);
+						$(option).appendTo("select#videoSource");
+ 					}
+				}
+			});
+
+			$("#videoSource").unbind("change").change(function(){
+				scannerStart()
+			});
+
+		} else {
+			$("#videoSource").addClass("hidden");
+		}
+		scannerStart();
+		$("#qrcode-scanner-callback-to").html($(this).attr('forward-result'));
+	});
+
+	function scannerStart(){
+		navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || false;
+		if(navigator.getUserMedia){
+			if (!!window.stream) {
+				$("video").attr('src',null);
+				window.stream.stop();
+  			}
+
+			var videoSource = $("select#videoSource").val();
+			var constraints = {
+				video: {
+					optional: [{sourceId: videoSource}]
+				}
+			};
+
+			navigator.getUserMedia(constraints, function(stream){
+				window.stream = stream; // make stream available to console
+				var videoElement = document.querySelector('video');
+				videoElement.src = window.URL.createObjectURL(stream);
+				videoElement.play();
+			}, function(error){ });
+
+			QCodeDecoder().decodeFromCamera(document.getElementById('videoReader'), function(er,data){
+				if(!er){
+					var match = data.match(/^bitcoin\:([13][a-z0-9]{26,33})/i);
+					var result = match ? match[1] : data;
+					$(""+$("#qrcode-scanner-callback-to").html()).val(result);
+					$("#qrScanClose").click();
+				}
+			});
+		} else {
+			$("#videoReaderError").removeClass("hidden");
+			$("#videoReader, #videoSource").addClass("hidden");
+		}
+	}
 
 	$("#redeemFromBtn").click(function(){
 		var thisbtn = this;
@@ -504,7 +627,12 @@ $(document).ready(function() {
 	/* broadcast a transaction */
 
 	$("#rawSubmitBtn").click(function(){
-		var thisbtn = this;
+		rawSubmitDefault(this);
+	});
+
+	// broadcast transaction vai coinbin (default)
+	function rawSubmitDefault(btn){ 
+		var thisbtn = btn;
 		var tx = coinjs.transaction();
 		$(thisbtn).val('Please wait, loading...').attr('disabled',true);
 		tx.broadcast(function(data){
@@ -518,7 +646,69 @@ $(document).ready(function() {
 			$("#rawTransactionStatus").fadeOut().fadeIn();
 			$(thisbtn).val('Submit').attr('disabled',false);
 		}, $("#rawTransaction").val());
-	});
+	}
+
+	// broadcast transaction via blockr.io (mainnet)
+	function rawSubmitBlockrio_BitcoinMainnet(thisbtn){ 
+		$(thisbtn).val('Please wait, loading...').attr('disabled',true);
+		$.ajax ({
+			type: "POST",
+			url: "https://btc.blockr.io/api/v1/tx/push",
+			data: {"hex":$("#rawTransaction").val()},
+			dataType: "json",
+			error: function(data) {
+				var obj = $.parseJSON(data.responseText);
+				var r = ' ';
+				r += (obj.data) ? obj.data : '';
+				r += (obj.message) ? ' '+obj.message : '';
+				r = (r!='') ? r : ' Failed to broadcast'; // build response 
+				$("#rawTransactionStatus").addClass('alert-danger').removeClass('alert-success').removeClass("hidden").html(r).prepend('<span class="glyphicon glyphicon-exclamation-sign"></span>');
+			},
+                        success: function(data) {
+				var obj = $.parseJSON(data.responseText);
+				if((obj.status && obj.data) && obj.status=='success'){
+					$("#rawTransactionStatus").addClass('alert-success').removeClass('alert-danger').removeClass("hidden").html(' Txid: '+obj.data);
+				} else {
+					$("#rawTransactionStatus").addClass('alert-danger').removeClass('alert-success').removeClass("hidden").html(' Unexpected error, please try again').prepend('<span class="glyphicon glyphicon-exclamation-sign"></span>');
+				}				
+			},
+			complete: function(data, status) {
+				$("#rawTransactionStatus").fadeOut().fadeIn();
+				$(thisbtn).val('Submit').attr('disabled',false);				
+			}
+		});
+	}
+
+	// broadcast transaction via blockr.io (testnet)
+	function rawSubmitBlockrio_BitcoinTestnet(thisbtn){ 
+		$(thisbtn).val('Please wait, loading...').attr('disabled',true);
+		$.ajax ({
+			type: "POST",
+			url: "https://tbtc.blockr.io/api/v1/tx/push",
+			data: {"hex":$("#rawTransaction").val()},
+			dataType: "json",
+			error: function(data) {
+				var obj = $.parseJSON(data.responseText);
+				var r = ' ';
+				r += (obj.data) ? obj.data : '';
+				r += (obj.message) ? ' '+obj.message : '';
+				r = (r!='') ? r : ' Failed to broadcast'; // build response 
+				$("#rawTransactionStatus").addClass('alert-danger').removeClass('alert-success').removeClass("hidden").html(r).prepend('<span class="glyphicon glyphicon-exclamation-sign"></span>');
+			},
+                        success: function(data) {
+				var obj = $.parseJSON(data.responseText);
+				if((obj.status && obj.data) && obj.status=='success'){
+					$("#rawTransactionStatus").addClass('alert-success').removeClass('alert-danger').removeClass("hidden").html(' Txid: '+obj.data);
+				} else {
+					$("#rawTransactionStatus").addClass('alert-danger').removeClass('alert-success').removeClass("hidden").html(' Unexpected error, please try again').prepend('<span class="glyphicon glyphicon-exclamation-sign"></span>');
+				}
+			},
+			complete: function(data, status) {
+				$("#rawTransactionStatus").fadeOut().fadeIn();
+				$(thisbtn).val('Submit').attr('disabled',false);				
+			}
+		});
+	}
 
 	/* verify script code */
 
@@ -529,7 +719,9 @@ $(document).ready(function() {
 			if(!decodeTransactionScript()){
 				if(!decodePrivKey()){
 					if(!decodePubKey()){
-						$("#verifyStatus").removeClass('hidden').fadeOut().fadeIn();
+						if(!decodeHDaddress()){
+							$("#verifyStatus").removeClass('hidden').fadeOut().fadeIn();
+						}
 					}
 				}
 			}
@@ -545,9 +737,12 @@ $(document).ready(function() {
 			$("#verifyRsData .signaturesRequired").html(decode['signaturesRequired']);
 			$("#verifyRsData table tbody").html("");
 			for(var i=0;i<decode.pubkeys.length;i++){
-				$('<tr><td><input type="text" class="form-control" value="'+decode.pubkeys[i]+'" readonly></td></tr>').appendTo("#verifyRsData table tbody");
+				var pubkey = decode.pubkeys[i];
+				var address = coinjs.pubkey2address(pubkey);
+				$('<tr><td width="30%"><input type="text" class="form-control" value="'+address+'" readonly></td><td><input type="text" class="form-control" value="'+pubkey+'" readonly></td></tr>').appendTo("#verifyRsData table tbody");
 			}
 			$("#verifyRsData").removeClass("hidden");
+			$(".verifyLink").attr('href','?verify='+$("#verifyScript").val());
 			return true;
 		} else {
 			return false;
@@ -588,33 +783,59 @@ $(document).ready(function() {
 				h += '</td>';
 				h += '</tr>';
 			});
+
 			$(h).appendTo("#verifyTransactionData .ins tbody");
 
 			h = '';
 			$.each(decode.outs, function(i,o){
 
-				var addr = '';
-				if(o.script.chunks.length==5){
-					addr = coinjs.scripthash2address(Crypto.util.bytesToHex(o.script.chunks[2]));
-				} else {
-					var pub = coinjs.pub;
-					coinjs.pub = coinjs.multisig;
-					addr = coinjs.scripthash2address(Crypto.util.bytesToHex(o.script.chunks[1]));
-					coinjs.pub = pub;
-				}
+				if(o.script.chunks.length==2 && o.script.chunks[0]==106){ // OP_RETURN
 
-				h += '<tr>';
-				h += '<td><input class="form-control" type="text" value="'+addr+'" readonly></td>';
-				h += '<td class="col-xs-1">'+(o.value/100000000).toFixed(8)+'</td>';
-				h += '<td class="col-xs-2"><input class="form-control" type="text" value="'+Crypto.util.bytesToHex(o.script.buffer)+'" readonly></td>';
-				h += '</tr>';
+					var data = Crypto.util.bytesToHex(o.script.chunks[1]);
+					var dataascii = hex2ascii(data);
+
+					if(dataascii.match(/^[\s\d\w]+$/ig)){
+						data = dataascii;
+					}
+
+					h += '<tr>';
+					h += '<td><input type="text" class="form-control" value="(OP_RETURN) '+data+'" readonly></td>';
+					h += '<td class="col-xs-1">'+(o.value/100000000).toFixed(8)+'</td>';
+					h += '<td class="col-xs-2"><input class="form-control" type="text" value="'+Crypto.util.bytesToHex(o.script.buffer)+'" readonly></td>';
+					h += '</tr>';
+				} else {
+
+					var addr = '';
+					if(o.script.chunks.length==5){
+						addr = coinjs.scripthash2address(Crypto.util.bytesToHex(o.script.chunks[2]));
+					} else {
+						var pub = coinjs.pub;
+						coinjs.pub = coinjs.multisig;
+						addr = coinjs.scripthash2address(Crypto.util.bytesToHex(o.script.chunks[1]));
+						coinjs.pub = pub;
+					}
+
+					h += '<tr>';
+					h += '<td><input class="form-control" type="text" value="'+addr+'" readonly></td>';
+					h += '<td class="col-xs-1">'+(o.value/100000000).toFixed(8)+'</td>';
+					h += '<td class="col-xs-2"><input class="form-control" type="text" value="'+Crypto.util.bytesToHex(o.script.buffer)+'" readonly></td>';
+					h += '</tr>';
+				}
 			});
 			$(h).appendTo("#verifyTransactionData .outs tbody");
 
+			$(".verifyLink").attr('href','?verify='+$("#verifyScript").val());
 			return true;
 		} catch(e) {
 			return false;
 		}
+	}
+
+	function hex2ascii(hex) {
+		var str = '';
+		for (var i = 0; i < hex.length; i += 2)
+			str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
+		return str;
 	}
 
 	function decodePrivKey(){
@@ -646,6 +867,7 @@ $(document).ready(function() {
 			try {
 				$("#verifyPubKey .address").val(coinjs.pubkey2address(pubkey));
 				$("#verifyPubKey").removeClass("hidden");
+				$(".verifyLink").attr('href','?verify='+$("#verifyScript").val());
 				return true;
 			} catch (e) {
 				return false;
@@ -654,6 +876,53 @@ $(document).ready(function() {
 			return false;
 		}
 	}
+
+	function decodeHDaddress(){
+		var s = $("#verifyScript").val();
+		try {
+			var hex = Crypto.util.bytesToHex((coinjs.base58decode(s)).slice(0,4));
+			var hex_cmp_prv = Crypto.util.bytesToHex((coinjs.numToBytes(coinjs.hdkey.prv,4)).reverse());
+			var hex_cmp_pub = Crypto.util.bytesToHex((coinjs.numToBytes(coinjs.hdkey.pub,4)).reverse());
+			if(hex == hex_cmp_prv || hex == hex_cmp_pub){
+				var hd = coinjs.hd(s);
+				$("#verifyHDaddress .hdKey").html(s);
+				$("#verifyHDaddress .chain_code").val(Crypto.util.bytesToHex(hd.chain_code));
+				$("#verifyHDaddress .depth").val(hd.depth);
+				$("#verifyHDaddress .version").val('0x'+(hd.version).toString(16));
+				$("#verifyHDaddress .child_index").val(hd.child_index);
+				$("#verifyHDaddress .hdwifkey").val((hd.keys.wif)?hd.keys.wif:'');
+				$("#verifyHDaddress .key_type").html((((hd.depth==0 && hd.child_index==0)?'Master':'Derived')+' '+hd.type).toLowerCase());
+				$("#verifyHDaddress .parent_fingerprint").val(Crypto.util.bytesToHex(hd.parent_fingerprint));
+				$("#verifyHDaddress .derived_data table tbody").html("");
+				deriveHDaddress();
+				$(".verifyLink").attr('href','?verify='+$("#verifyScript").val());
+				$("#verifyHDaddress").removeClass("hidden");
+				return true;
+			}
+		} catch (e) {
+			return false;
+		}
+	}
+
+	function deriveHDaddress() {
+		var hd = coinjs.hd($("#verifyHDaddress .hdKey").html());
+		var index_start = $("#verifyHDaddress .derivation_index_start").val()*1;
+		var index_end = $("#verifyHDaddress .derivation_index_end").val()*1;
+		var html = '';
+		$("#verifyHDaddress .derived_data table tbody").html("");
+		for(var i=index_start;i<=index_end;i++){
+			var derived = hd.derive(i);
+			html += '<tr>';
+			html += '<td>'+i+'</td>';
+			html += '<td><input type="text" class="form-control" value="'+derived.keys.address+'" readonly></td>';
+			html += '<td><input type="text" class="form-control" value="'+((derived.keys.wif)?derived.keys.wif:'')+'" readonly></td>';
+			html += '<td><input type="text" class="form-control" value="'+derived.keys_extended.pubkey+'" readonly></td>';
+			html += '<td><input type="text" class="form-control" value="'+((derived.keys_extended.privkey)?derived.keys_extended.privkey:'')+'" readonly></td>';
+			html += '</tr>';
+		}
+		$(html).appendTo("#verifyHDaddress .derived_data table tbody");
+	}
+
 
 	/* sign code */
 
@@ -695,11 +964,58 @@ $(document).ready(function() {
 
 	/* page load code */
 
+	function _get(value) {
+		var dataArray = (document.location.search).match(/(([a-z0-9\_\[\]]+\=[a-z0-9\_\.\%\@]+))/gi);
+		var r = [];
+		if(dataArray) {
+			for(var x in dataArray) {
+				if((dataArray[x]) && typeof(dataArray[x])=='string') {
+					if((dataArray[x].split('=')[0].toLowerCase()).replace(/\[\]$/ig,'') == value.toLowerCase()) {
+						r.push(unescape(dataArray[x].split('=')[1]));
+					}
+				}
+			}
+		}
+		return r;
+	}
+
+	$("#newKeysBtn, #newHDKeysBtn").click();
+
+	var _getBroadcast = _get("broadcast");
+	if(_getBroadcast[0]){
+		$("#rawTransaction").val(_getBroadcast[0]);
+		$("#rawSubmitBtn").click();
+		window.location.hash = "#broadcast";
+	}
+
+	var _getVerify = _get("verify");
+	if(_getVerify[0]){
+		$("#verifyScript").val(_getVerify[0]);
+		$("#verifyBtn").click();
+		window.location.hash = "#verify";
+	}
+
 	$(".qrcodeBtn").click(function(){
 		$("#qrcode").html("");
 		var thisbtn = $(this).parent().parent();
-		var qrcode = new QRCode("qrcode");
-		qrcode.makeCode("bitcoin:"+$('.address',thisbtn).val());
+		var qrstr = false;
+		var ta = $("textarea",thisbtn);
+
+		if(ta.length>0){
+			var w = (screen.availWidth > screen.availHeight ? screen.availWidth : screen.availHeight)/3;
+			var qrcode = new QRCode("qrcode", {width:w, height:w});
+			qrstr = $(ta).val();
+			if(qrstr.length > 1024){
+				$("#qrcode").html("<p>Sorry the data is too long for the QR generator.</p>");
+			}
+		} else {
+			var qrcode = new QRCode("qrcode");
+			qrstr = "bitcoin:"+$('.address',thisbtn).val();
+		}
+
+		if(qrstr){
+			qrcode.makeCode(qrstr);
+		}
 	});
 
 	$('input[title!=""], abbr[title!=""]').tooltip({'placement':'bottom'});
@@ -739,7 +1055,141 @@ $(document).ready(function() {
 		$(".pubkeyAdd").click();
 	}
 
-	$("#newKeysBtn").click();
-
 	validateOutputAmount();
+
+	/* settings page code */
+
+	$("#coinjs_pub").val('0x'+(coinjs.pub).toString(16));
+	$("#coinjs_priv").val('0x'+(coinjs.priv).toString(16));
+	$("#coinjs_multisig").val('0x'+(coinjs.multisig).toString(16));
+
+	$("#coinjs_hdpub").val('0x'+(coinjs.hdkey.pub).toString(16));
+	$("#coinjs_hdprv").val('0x'+(coinjs.hdkey.prv).toString(16));	
+
+	$("#settingsBtn").click(function(){
+
+		$("#statusSettings").removeClass("alert-success").removeClass("alert-danger").addClass("hidden").html("");
+		$("#settings .has-error").removeClass("has-error");
+
+		$.each($(".coinjssetting"),function(i, o){
+			if(!$(o).val().match(/^0x[0-9a-f]+$/)){
+				$(o).parent().addClass("has-error");
+			}
+		});
+
+		if($("#settings .has-error").length==0){
+
+			coinjs.pub =  $("#coinjs_pub").val()*1;
+			coinjs.priv =  $("#coinjs_priv").val()*1;
+			coinjs.multisig =  $("#coinjs_multisig").val()*1;
+
+			coinjs.hdkey.pub =  $("#coinjs_hdpub").val()*1;
+			coinjs.hdkey.prv =  $("#coinjs_hdprv").val()*1;
+
+			configureBroadcast();
+			configureGetUnspentTx();
+
+			$("#statusSettings").addClass("alert-success").removeClass("hidden").html("<span class=\"glyphicon glyphicon-ok\"></span> Settings updates successfully").fadeOut().fadeIn();	
+		} else {
+			$("#statusSettings").addClass("alert-danger").removeClass("hidden").html("There is an error with one or more of your settings");	
+		}
+	});
+
+	$("#coinjs_coin").change(function(){
+		// log out of openwallet
+		$("#walletLogout").click();
+
+		var o = ($("option:selected",this).attr("rel")).split(";");
+
+		// deal with broadcasting settings
+		if(o[5]=="false"){
+			$("#coinjs_broadcast, #rawTransaction, #rawSubmitBtn, #openBtn").attr('disabled',true);
+			$("#coinjs_broadcast").val("coinb.in");			
+		} else {
+			$("#coinjs_broadcast").val(o[5]);
+			$("#coinjs_broadcast, #rawTransaction, #rawSubmitBtn, #openBtn").attr('disabled',false);
+		}
+
+		// deal with unspent output settings
+		if(o[6]=="false"){
+			$("#coinjs_utxo, #redeemFrom, #redeemFromBtn, #openBtn, .qrcodeScanner").attr('disabled',true);			
+			$("#coinjs_utxo").val("coinb.in");
+		} else {
+			$("#coinjs_utxo").val(o[6]);
+			$("#coinjs_utxo, #redeemFrom, #redeemFromBtn, #openBtn, .qrcodeScanner").attr('disabled',false);
+		}
+
+		// deal with the reset
+		$("#coinjs_pub").val(o[0]);
+		$("#coinjs_priv").val(o[1]);
+		$("#coinjs_multisig").val(o[2]);
+		$("#coinjs_hdpub").val(o[3]);
+		$("#coinjs_hdprv").val(o[4]);
+
+		// hide/show custom screen
+		if($("option:selected",this).val()=="custom"){
+			$("#settingsCustom").removeClass("hidden");
+		} else {
+			$("#settingsCustom").addClass("hidden");
+		}
+	});
+
+	function configureBroadcast(){
+		var host = $("#coinjs_broadcast option:selected").val();
+		var tx = coinjs.transaction();
+		$("#rawSubmitBtn").unbind("");
+		if(host=="blockr.io_bitcointestnet"){
+			$("#rawSubmitBtn").click(function(){
+				rawSubmitBlockrio_BitcoinTestnet(this)
+			});
+		} else if(host=="blockr.io_bitcoinmainnet"){
+			$("#rawSubmitBtn").click(function(){
+				rawSubmitBlockrio_BitcoinMainnet(this);
+			});
+		} else {
+			$("#rawSubmitBtn").click(function(){
+				rawSubmitDefault(this); // revert to default
+			});
+		}
+
+	}
+
+	function configureGetUnspentTx(){
+		// function coming soon, which will allow you to retrieve unspent inputs 
+		// from other block chain providers
+
+		return false;
+	}
+
+	/* capture mouse movement to add entropy */
+	var IE = document.all?true:false // Boolean, is browser IE?
+	if (!IE) document.captureEvents(Event.MOUSEMOVE)
+	document.onmousemove = getMouseXY;
+	function getMouseXY(e) {
+		var tempX = 0;
+		var tempY = 0;
+		if (IE) { // If browser is IE
+			tempX = event.clientX + document.body.scrollLeft;
+			tempY = event.clientY + document.body.scrollTop;
+		} else {
+			tempX = e.pageX;
+			tempY = e.pageY;
+		};
+
+		if (tempX < 0){tempX = 0};
+		if (tempY < 0){tempY = 0};
+		var xEnt = Crypto.util.bytesToHex([tempX]).slice(-2);
+		var yEnt = Crypto.util.bytesToHex([tempY]).slice(-2);
+		var addEnt = xEnt.concat(yEnt);
+
+		if ($("#entropybucket").html().indexOf(xEnt) == -1 && $("#entropybucket").html().indexOf(yEnt) == -1) {
+			$("#entropybucket").html(addEnt + $("#entropybucket").html());
+		};
+
+		if ($("#entropybucket").html().length > 128) {
+			$("#entropybucket").html($("#entropybucket").html().slice(0, 128))
+		};
+
+		return true;
+	};
 });
