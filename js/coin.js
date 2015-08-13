@@ -10,9 +10,9 @@
 	var coinjs = window.coinjs = function () { };
 
 	/* public vars */
-	coinjs.pub = 0x00;
-	coinjs.priv = 0x80;
-	coinjs.multisig = 0x05;
+	coinjs.pub = 0x76;
+	coinjs.priv = 0xf6;
+	coinjs.multisig = 0x1c;
 	coinjs.hdkey = {'prv':0x0488ade4, 'pub':0x0488b21e};
 
 	coinjs.compressed = false;
@@ -731,7 +731,8 @@
 		r.lock_time = 0;
 		r.ins = [];
 		r.outs = [];
-		r.timestamp = null;
+        var dateObj = new Date();
+		r.timestamp = (dateObj.getTime() / 1000) + (dateObj.getTimezoneOffset() * 60);
 		r.block = null;
 
 		/* add an input to a transaction */
@@ -1124,6 +1125,7 @@
 		r.serialize = function(){
 			var buffer = [];
 			buffer = buffer.concat(coinjs.numToBytes(parseInt(this.version),4));
+			buffer = buffer.concat(coinjs.numToBytes(parseInt(this.timestamp),4));
 			buffer = buffer.concat(coinjs.numToVarInt(this.ins.length));
 
 			for (var i = 0; i < this.ins.length; i++) {
@@ -1183,6 +1185,8 @@
 			var obj = new coinjs.transaction();
 
 			obj.version = readAsInt(4);
+            obj.timestamp = readAsInt(4);
+
 			var ins = readVarInt();
 			for (var i = 0; i < ins; i++) {
 				obj.ins.push({
