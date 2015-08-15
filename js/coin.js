@@ -14,6 +14,7 @@
 	coinjs.priv = 0xf6;
 	coinjs.multisig = 0x1c;
 	coinjs.hdkey = {'prv':0x0488ade4, 'pub':0x0488b21e};
+    coinjs.txtimestamped = true;
 
 	coinjs.compressed = false;
 
@@ -1125,7 +1126,11 @@
 		r.serialize = function(){
 			var buffer = [];
 			buffer = buffer.concat(coinjs.numToBytes(parseInt(this.version),4));
-			buffer = buffer.concat(coinjs.numToBytes(parseInt(this.timestamp),4));
+
+			if (coinjs.txtimestamped == true) {
+                buffer = buffer.concat(coinjs.numToBytes(parseInt(this.timestamp),4));
+            }
+
 			buffer = buffer.concat(coinjs.numToVarInt(this.ins.length));
 
 			for (var i = 0; i < this.ins.length; i++) {
@@ -1185,8 +1190,11 @@
 			var obj = new coinjs.transaction();
 
 			obj.version = readAsInt(4);
-            obj.timestamp = readAsInt(4);
-
+			
+            if (coinjs.txtimestamped == true) {
+                obj.timestamp = readAsInt(4);
+            }
+            
 			var ins = readVarInt();
 			for (var i = 0; i < ins; i++) {
 				obj.ins.push({

@@ -63,6 +63,7 @@
 							<li><a href="#sign" data-toggle="tab"><span class="glyphicon glyphicon-pencil"></span> Sign</a></li>
 							<li><a href="#broadcast" data-toggle="tab"><span class="glyphicon glyphicon-globe"></span> Broadcast</a></li>
 							<li><a href="#wallet" data-toggle="tab"><span class="glyphicon glyphicon-briefcase"></span> Wallet</a></li>
+							<li><a href="#settings" data-toggle="tab"><span class="glyphicon glyphicon-cog"></span> Settings</a></li>
 							<li><a href="#about" data-toggle="tab"><span class="glyphicon glyphicon-info-sign"></span> About</a></li>
 
 							<li class="hidden"><a href="#settings" data-toggle="tab"><span class="glyphicon glyphicon-cog"></span> Settings</a></li>
@@ -814,10 +815,10 @@
 								<b>Network</b>: <br>
 								<p class="text-muted">Select which network you'd like to use for key pair generation.</p>
 								<select class="form-control" id="coinjs_coin">
-									<option value="bitcoin_mainnet" rel="0x00;0x80;0x05;0x488b21e;0x488ade4;coinb.in;coinb.in">Bitcoin (mainnet)</option>
-									<option value="bitcoin_testnet" rel="0x6f;0xef;0xc4;0x043587cf;0x04358394;blockr.io_bitcointestnet;false">Bitcoin (testnet)</option>
-
-									<option value="custom" rel="0x00;0x80;0x05;0x488b21e;0x488ade4;false;false">Custom</option>
+									<option value="piggycoin_mainnet" rel="0x76;0xf6;0x1c;0x4889b21e;0x488ade4;piggycoin;piggycoin;true">PiggyCoin (mainnet)</option>
+									<option value="bitcoin_mainnet" rel="0x00;0x80;0x05;0x488b21e;0x488ade4;coinb.in;coinb.in;false">Bitcoin (mainnet)</option>
+									<option value="bitcoin_testnet" rel="0x6f;0xef;0xc4;0x043587cf;0x04358394;blockr.io_bitcointestnet;false;false">Bitcoin (testnet)</option>
+									<option value="custom" rel="0x00;0x80;0x05;0x488b21e;0x488ade4;false;false;false">Custom</option>
 								</select>
 							</div>
 						</div>
@@ -827,22 +828,29 @@
 							<hr>
 
 							<div class="row">
-								<div class="col-md-4">
+								<div class="col-md-3">
 									<b>Pub</b>: <br>
 									<input type="text" class="form-control coinjssetting" id="coinjs_pub">
 								</div>
 
-								<div class="col-md-4">
+								<div class="col-md-3">
 									<b>Priv</b>: <br>
 									<input type="text" class="form-control coinjssetting" id="coinjs_priv">
 								</div>
 
-								<div class="col-md-4">
+								<div class="col-md-3">
 									<b>Script Hash (multisig)</b>: <br>
 									<input type="text" class="form-control coinjssetting" id="coinjs_multisig">
 								</div>
-							</div>
 
+								<div class="col-md-3">
+									<b>Tx Timestamped (peercoin / PoS)</b>: <br>
+                                    <select class="form-control" id="coinjs_txtimestamped">
+                                        <option value="true">True</option>
+                                        <option value="false">False</option>
+                                    </select>
+								</div>
+							</div>
 
 							<div class="row">
 								<div class="col-md-6">
@@ -868,6 +876,7 @@
 								<b>Broadcast</b>: <br>
 								<p class="text-muted">Select the network you wish to broadcast the transaction via</p>
 								<select class="form-control" id="coinjs_broadcast">
+									<option value="piggycoin"> Piggy-Coin.com (PiggyCoin mainnet)</option>
 									<option value="coinb.in">coinb.in (Bitcoin mainnet)</option>
 									<option value="blockr.io_bitcoinmainnet"> Blockr.io (Bitcoin mainnet)</option>
 									<option value="blockr.io_bitcointestnet"> Blockr.io (Bitcoin testnet)</option>
@@ -882,6 +891,7 @@
 								<b>Unspent outputs</b>: <br>
 								<p class="text-muted">Select the network you wish to retreive your unspent inputs from</p>
 								<select class="form-control" id="coinjs_utxo">
+									<option value="piggycoin">Piggy-Coin.com (PiggyCoin mainnet)</option>
 									<option value="coinb.in">coinb.in (Bitcoin mainnet)</option>
 								</select>
 							</div>

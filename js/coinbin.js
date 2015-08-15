@@ -710,6 +710,37 @@ $(document).ready(function() {
 		});
 	}
 
+	// broadcast transaction via PiggyCoin (mainnet)
+	function rawSubmitPiggyCoinMainnet(thisbtn){ 
+		$(thisbtn).val('Please wait, loading...').attr('disabled',true);
+		$.ajax ({
+			type: "POST",
+			url: "https://piggy-coin.com/insightapi/tx/push",
+			data: {"hex":$("#rawTransaction").val()},
+			dataType: "json",
+			error: function(data) {
+				var obj = $.parseJSON(data.responseText);
+				var r = ' ';
+				r += (obj.data) ? obj.data : '';
+				r += (obj.message) ? ' '+obj.message : '';
+				r = (r!='') ? r : ' Failed to broadcast'; // build response 
+				$("#rawTransactionStatus").addClass('alert-danger').removeClass('alert-success').removeClass("hidden").html(r).prepend('<span class="glyphicon glyphicon-exclamation-sign"></span>');
+			},
+                        success: function(data) {
+				var obj = $.parseJSON(data.responseText);
+				if((obj.status && obj.data) && obj.status=='success'){
+					$("#rawTransactionStatus").addClass('alert-success').removeClass('alert-danger').removeClass("hidden").html(' Txid: '+obj.data);
+				} else {
+					$("#rawTransactionStatus").addClass('alert-danger').removeClass('alert-success').removeClass("hidden").html(' Unexpected error, please try again').prepend('<span class="glyphicon glyphicon-exclamation-sign"></span>');
+				}
+			},
+			complete: function(data, status) {
+				$("#rawTransactionStatus").fadeOut().fadeIn();
+				$(thisbtn).val('Submit').attr('disabled',false);				
+			}
+		});
+	}
+
 	/* verify script code */
 
 	$("#verifyBtn").click(function(){
@@ -1065,6 +1096,7 @@ $(document).ready(function() {
 
 	$("#coinjs_hdpub").val('0x'+(coinjs.hdkey.pub).toString(16));
 	$("#coinjs_hdprv").val('0x'+(coinjs.hdkey.prv).toString(16));	
+    $("#coinjs_txtimestamped").val((coinjs.txtimestamped).toString(16));
 
 	$("#settingsBtn").click(function(){
 
@@ -1085,11 +1117,12 @@ $(document).ready(function() {
 
 			coinjs.hdkey.pub =  $("#coinjs_hdpub").val()*1;
 			coinjs.hdkey.prv =  $("#coinjs_hdprv").val()*1;
-
+            coinjs.txtimestamped = Boolean($("#coinjs_txtimestamped").val() == "true");
+            
 			configureBroadcast();
 			configureGetUnspentTx();
 
-			$("#statusSettings").addClass("alert-success").removeClass("hidden").html("<span class=\"glyphicon glyphicon-ok\"></span> Settings updates successfully").fadeOut().fadeIn();	
+			$("#statusSettings").addClass("alert-success").removeClass("hidden").html("<span class=\"glyphicon glyphicon-ok\"></span> Settings updated successfully").fadeOut().fadeIn();	
 		} else {
 			$("#statusSettings").addClass("alert-danger").removeClass("hidden").html("There is an error with one or more of your settings");	
 		}
@@ -1125,6 +1158,7 @@ $(document).ready(function() {
 		$("#coinjs_multisig").val(o[2]);
 		$("#coinjs_hdpub").val(o[3]);
 		$("#coinjs_hdprv").val(o[4]);
+		$("#coinjs_txtimestamped").val(o[7]);
 
 		// hide/show custom screen
 		if($("option:selected",this).val()=="custom"){
@@ -1145,6 +1179,10 @@ $(document).ready(function() {
 		} else if(host=="blockr.io_bitcoinmainnet"){
 			$("#rawSubmitBtn").click(function(){
 				rawSubmitBlockrio_BitcoinMainnet(this);
+			});
+		} else if(host=="piggycoin"){
+			$("#rawSubmitBtn").click(function(){
+				rawSubmitPiggyCoinMainnet(this);
 			});
 		} else {
 			$("#rawSubmitBtn").click(function(){
