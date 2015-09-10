@@ -535,8 +535,12 @@ $(document).ready(function() {
 			listUnspentBlockrio_BitcoinMainnet(redeem);
 		} else if(host=='chain.so_litecoin'){
 			listUnspentChainso_Litecoin(redeem);
-		} else {
+		} else if(host=='piggycoin'){
+			listUnspentInsightAPI_PiggyCoin(redeem);
+		} else if(host=='false'){
 			listUnspentDefault(redeem);
+		} else {
+			listUnspentInsightAPI_PiggyCoin(redeem);
 		}
 	});
 
@@ -644,7 +648,7 @@ $(document).ready(function() {
 		});
 	}
 
-	/* retrieve unspent data from blockrio for litecoin */
+	/* retrieve unspent data from Chainso for litecoin */
 	function listUnspentChainso_Litecoin(redeem){
 		$.ajax ({
 			type: "GET",
@@ -654,7 +658,6 @@ $(document).ready(function() {
 				$("#redeemFromStatus").removeClass('hidden').html('<span class="glyphicon glyphicon-exclamation-sign"></span> Unexpected error, unable to retrieve unspent outputs!');
 			},
 			success: function(data) {
-				console.log(data);
 				if((data.status && data.data) && data.status=='success'){
 					$("#redeemFromAddress").removeClass('hidden').html('<span class="glyphicon glyphicon-info-sign"></span> Retrieved unspent inputs from address <a href="https://btc.blockr.io/address/info/'+redeem.addr+'" target="_blank">'+redeem.addr+'</a>');
 					for(var i in data.data.txs){
@@ -667,6 +670,37 @@ $(document).ready(function() {
 					}
 				} else {
 					$("#redeemFromStatus").removeClass('hidden').html('<span class="glyphicon glyphicon-exclamation-sign"></span> Unexpected error, unable to retrieve unspent outputs.');
+				}
+			},
+			complete: function(data, status) {
+				$("#redeemFromBtn").html("Load").attr('disabled',false);
+				totalInputAmount();
+			}
+		});
+	}
+
+	/* retrieve unspent data from InsightAPI for piggycoin */
+	function listUnspentInsightAPI_PiggyCoin(redeem){
+		$.ajax ({
+			type: "GET",
+			url: "http://172.245.32.43:3000/api/addr/"+redeem.addr+"/utxo",
+			dataType: "json",
+			error: function(data) {
+				$("#redeemFromStatus").removeClass('hidden').html('<span class="glyphicon glyphicon-exclamation-sign"></span> Unexpected error, unable to retrieve unspent outputs!');
+			},
+			success: function(data) {
+				if(data.length > 0){
+					$("#redeemFromAddress").removeClass('hidden').html('<span class="glyphicon glyphicon-info-sign"></span> Retrieved unspent inputs from address <a href="https://btc.blockr.io/address/info/'+redeem.addr+'" target="_blank">'+redeem.addr+'</a>');
+					for(var i in data){
+						var o = data[i];
+						var tx = o.txid;
+						var n = o.vout;
+						var script = (redeem.isMultisig==true) ? $("#redeemFrom").val() : o.scriptPubKey;
+						var amount = o.amount;
+						addOutput(tx, n, script, amount);
+					}
+				} else {
+					$("#redeemFromStatus").removeClass('hidden').html('<span class="glyphicon glyphicon-exclamation-sign"></span> No unspent outputs found.');
 				}
 			},
 			complete: function(data, status) {
@@ -815,8 +849,8 @@ $(document).ready(function() {
 		});
 	}
 
-	// broadcast transaction via PiggyCoin (mainnet)
-	function rawSubmitPiggyCoinMainnet(thisbtn){ 
+	// broadcast transaction via InsightAPI for PiggyCoin (mainnet)
+	function rawSubmitInsightAPI_PiggyCoin(thisbtn){ 
 		$(thisbtn).val('Please wait, loading...').attr('disabled',true);
 		$.ajax ({
 			type: "POST",
@@ -831,10 +865,10 @@ $(document).ready(function() {
 				r = (r!='') ? r : ' Failed to broadcast'; // build response 
 				$("#rawTransactionStatus").addClass('alert-danger').removeClass('alert-success').removeClass("hidden").html(r).prepend('<span class="glyphicon glyphicon-exclamation-sign"></span>');
 			},
-                        success: function(data) {
+            success: function(data) {
 				var obj = $.parseJSON(data.responseText);
-				if((obj.status && obj.data) && obj.status=='success'){
-					$("#rawTransactionStatus").addClass('alert-success').removeClass('alert-danger').removeClass("hidden").html(' Txid: '+obj.data);
+				if(obj.length > 0){
+					$("#rawTransactionStatus").addClass('alert-success').removeClass('alert-danger').removeClass("hidden").html(' TxID: '+obj.txid);
 				} else {
 					$("#rawTransactionStatus").addClass('alert-danger').removeClass('alert-success').removeClass("hidden").html(' Unexpected error, please try again').prepend('<span class="glyphicon glyphicon-exclamation-sign"></span>');
 				}
@@ -1289,9 +1323,13 @@ $(document).ready(function() {
 			$("#rawSubmitBtn").click(function(){
 				rawSubmitPiggyCoinMainnet(this);
 			});
-		} else {
+		} else if(host=="false"){
 			$("#rawSubmitBtn").click(function(){
 				rawSubmitDefault(this); // revert to default
+			});
+		} else {
+			$("#rawSubmitBtn").click(function(){
+				rawSubmitInsightAPI_PiggyCoin(this);
 			});
 		}
 	}
