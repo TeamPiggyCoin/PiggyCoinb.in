@@ -715,8 +715,8 @@ $(document).ready(function() {
 		$(thisbtn).val('Please wait, loading...').attr('disabled',true);
 		$.ajax ({
 			type: "POST",
-			url: "https://piggy-coin.com/insightapi/tx/push",
-			data: {"hex":$("#rawTransaction").val()},
+			url: "http://172.245.32.43:3000/api/tx/send",
+			data: {"rawtx":$("#rawTransaction").val()},
 			dataType: "json",
 			error: function(data) {
 				var obj = $.parseJSON(data.responseText);
