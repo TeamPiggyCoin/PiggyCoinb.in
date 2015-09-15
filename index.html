@@ -2,11 +2,11 @@
 <html lang="en">
 	<head>
 
-		<title>Bitcoin Wallet by Coinb.in</title>
+		<title>PiggyCoinb.in Wallet</title>
 
         	<meta http-equiv="content-type" content="text/html;charset=utf-8" />
-		<meta name="keywords" content="bitcoin, wallet, multisig, multisignature, address, browser, javascript, js, broadcast, transaction, verify, decode" />
-		<meta name="description" content="A Bitcoin Wallet written in Javascript. Supports Multisig, Custom Transactions, nLockTime and more!" />
+		<meta name="keywords" content="piggycoin, bitcoin, wallet, multisig, multisignature, address, browser, javascript, js, broadcast, transaction, verify, decode" />
+		<meta name="description" content="A PiggyCoin Wallet written in Javascript. Supports Multisig, Custom Transactions, nLockTime and more!" />
 
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -59,11 +59,11 @@
 									<li><a href="#newTransaction" data-toggle="tab">Transaction</a></li>
 								</ul>
 							</li>
-							<li><a href="#verify" data-toggle="tab"><span class="glyphicon glyphicon-ok"></span> Verify</a></li>
 							<li><a href="#sign" data-toggle="tab"><span class="glyphicon glyphicon-pencil"></span> Sign</a></li>
+							<li><a href="#verify" data-toggle="tab"><span class="glyphicon glyphicon-ok"></span> Verify</a></li>
 							<li><a href="#broadcast" data-toggle="tab"><span class="glyphicon glyphicon-globe"></span> Broadcast</a></li>
 							<li><a href="#wallet" data-toggle="tab"><span class="glyphicon glyphicon-briefcase"></span> Wallet</a></li>
-							<li><a href="#settings" data-toggle="tab"><span class="glyphicon glyphicon-cog"></span> Settings</a></li>
+							<!-- <li><a href="#settings" data-toggle="tab"><span class="glyphicon glyphicon-cog"></span> Settings</a></li> -->
 							<li><a href="#about" data-toggle="tab"><span class="glyphicon glyphicon-info-sign"></span> About</a></li>
 
 							<li class="hidden"><a href="#settings" data-toggle="tab"><span class="glyphicon glyphicon-cog"></span> Settings</a></li>
@@ -85,8 +85,8 @@
 						</div>
 
 						<div class="jumbotron">
-							<h1>Bitcoin. It's your money!</h1>
-							<p>Be your own bank, take control of your own money and start using Bitcoin today!</p>
+							<h1>PiggyCoin. They're your coins!</h1>
+							<p>Be your own piggybank, take control of your own money and start using PiggyCoin today!</p>
 							<p><a class="btn btn-primary btn-lg" href="#about" role="button">Learn more &raquo;</a></p>
 						</div>
 
@@ -778,8 +778,8 @@
 					</div>
 
 					<div class="tab-pane tab-content" id="broadcast">
-						<h2>Broadcast Transaction <small>into the bitcoin network</small></h2>
-						<p>Enter your hex encoded bitcoin transaction</p>
+						<h2>Broadcast Transaction <small>into the piggycoin network</small></h2>
+						<p>Enter your hex encoded piggycoin transaction</p>
 						<textarea class="form-control" style="height:125px" id="rawTransaction"></textarea>
 						<br>
 						<div id="rawTransactionStatus" class="alert hidden">
@@ -795,19 +795,19 @@
 					</div>
 
 					<div class="tab-pane tab-content" id="about">
-						<h2>About <small>open source bitcoin wallet</small></h2>
+						<h2>About <small>open source PiggyCoin wallet</small></h2>
 						<p>Version 1.2</p>
-						<p>Compatible with bitcoin-qt</p>
+						<p>Compatible with piggycoind / bitcoind RPC</p>
+						<p>Github <a href="https://github.com/TeamPiggyCoin/coinbin/">https://github.com/TeamPiggyCoin/coinbin/</a></p>
+						<p>An open-source port of"</p>
 						<p>Github <a href="https://github.com/OutCast3k/coinbin/">https://github.com/OutCast3k/coinbin/</a></p>
-						<p>TOR <a href="http://4zpinp6gdkjfplhk.onion">4zpinp6gdkjfplhk.onion</a></p>
-						<h3>What is Bitcoin?</h3>
-						<p>Bitcoin is a type of digital currency in which encryption techniques are used to regulate the generation of units of currency and verify the transfer of funds, operating independently of a central bank. See <a href="http://www.weusecoins.com/" target="_blank">weusecoins.com</a> for more information.</p>
-						<p>If you are looking to buy some Bitcoin try <a href="https://localbitcoins.com/?ch=173j" target="_blank">LocalBitcoins.com</a>.</p>
+						<h3>What is PiggyCoin?</h3>
+						<p>PiggyCoin is a type of digital currency in which encryption techniques are used to regulate the generation of units of currency and verify the transfer of funds, operating independently of a central bank. See <a href="http://www.weusecoins.com/" target="_blank">weusecoins.com</a> for more information.</p>
 						<h3>Information</h3>
 						<p>Coinb.in is a free and open source project released under the MIT license, originally by <a href="https://bitcointalk.org/index.php?action=profile;u=34834" target="_blank">OutCast3k</a> in 2013. Discussion of the project can be found at <a href="https://bitcointalk.org/index.php?topic=390046" target="_blank">bitcointalk.org</a> during its early testing stages when its primary focus was to develop a proof of concept multisig solution in javascript.</p>
 						<p>Coinb.in is run and funded by the generosity of others in terms of <a href="https://github.com/OutCast3k/coinbin/graphs/contributors" target="_blank">development</a> and hosting.</p>
 						<h3>Privacy</h3>
-						<p>Coinb.in beleives strongly in privacy, not only do we support the use of TOR, the site does not collect and store IP or transaction data via our servers nor do we store your bitcoins private key. We do route traffic via cloudflare using an SSL certificate.</p>
+						<p>Coinb.in beleives strongly in privacy, the site does not collect and store IP or transaction data via our servers nor do we store your coins private key. We do route traffic via cloudflare using an SSL certificate.</p>
 						<h3>Donate</h3>
 						<p>Please donate to <a href="bitcoin:1CWHWkTWaq1K5hevimJia3cyinQsrgXUvg">1CWHWkTWaq1K5hevimJia3cyinQsrgXUvg</a> if you found this project useful or want to see more features!</p>
 					</div>
@@ -917,7 +917,7 @@
 					</div>
 
 					<br>
-					<p class="text-muted">This page uses javascript to generate your addresses and sign your transactions within your browser, this means we <i>never</i> receive your private keys, this can be independently verified by reviewing the source code on <a href="https://github.com/OutCast3k/coinbin/" target="_blank">github</a>. You can even <a href="https://github.com/OutCast3k/coinbin/archive/master.zip">download</a> this page and host it yourself or run it offline!</p>
+					<p class="text-muted">This page uses javascript to generate your addresses and sign your transactions within your browser, this means we <i>never</i> receive your private keys, this can be independently verified by reviewing the source code on <a href="https://github.com/TeamPiggyCoin/coinbin/" target="_blank">github</a>. You can even <a href="https://github.com/TeamPiggyCoin/coinbin/archive/master.zip">download</a> this page and host it yourself or run it offline!</p>
 					<br>
 
 				</div>

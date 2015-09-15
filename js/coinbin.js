@@ -586,9 +586,10 @@ $(document).ready(function() {
 
 			$("#inputs .row:last input").attr('disabled',true);
 
-			var txid = ((tx).match(/.{1,2}/g).reverse()).join("")+'';
+			//var txid = ((tx).match(/.{1,2}/g).reverse()).join("")+'';
+			//$("#inputs .txId:last").val(txid);
+			$("#inputs .txId:last").val(tx);
 
-			$("#inputs .txId:last").val(txid);
 			$("#inputs .txIdN:last").val(n);
 			$("#inputs .txIdAmount:last").val(amount);
 			$("#inputs .txIdScript:last").val(script);
@@ -766,10 +767,31 @@ $(document).ready(function() {
 	/* broadcast a transaction */
 
 	$("#rawSubmitBtn").click(function(){
-		rawSubmitDefault(this);
+        var host = $(this).attr('rel');
+		if(host=="blockr.io_litecoin"){
+			$("#rawSubmitBtn").click(function(){
+				rawSubmitBlockrio_litecoin(this)
+			});
+		} else if(host=="blockr.io_bitcoinmainnet"){
+			$("#rawSubmitBtn").click(function(){
+				rawSubmitBlockrio_BitcoinMainnet(this);
+			});
+		} else if(host=="piggycoin"){
+			$("#rawSubmitBtn").click(function(){
+				rawSubmitInsightAPI_PiggyCoin(this);
+			});
+		} else if(host=="false"){
+			$("#rawSubmitBtn").click(function(){
+				rawSubmitDefault(this); // revert to default
+			});
+		} else {
+			$("#rawSubmitBtn").click(function(){
+				rawSubmitInsightAPI_PiggyCoin(this);
+			});
+		}
 	});
 
-	// broadcast transaction vai coinbin (default)
+	// broadcast transaction via coinbin (default)
 	function rawSubmitDefault(btn){ 
 		var thisbtn = btn;
 		var tx = coinjs.transaction();
@@ -803,7 +825,7 @@ $(document).ready(function() {
 				r = (r!='') ? r : ' Failed to broadcast'; // build response 
 				$("#rawTransactionStatus").addClass('alert-danger').removeClass('alert-success').removeClass("hidden").html(r).prepend('<span class="glyphicon glyphicon-exclamation-sign"></span>');
 			},
-                        success: function(data) {
+            success: function(data) {
 				var obj = $.parseJSON(data.responseText);
 				if((obj.status && obj.data) && obj.status=='success'){
 					$("#rawTransactionStatus").addClass('alert-success').removeClass('alert-danger').removeClass("hidden").html(' Txid: '+obj.data);
@@ -834,7 +856,7 @@ $(document).ready(function() {
 				r = (r!='') ? r : ' Failed to broadcast'; // build response 
 				$("#rawTransactionStatus").addClass('alert-danger').removeClass('alert-success').removeClass("hidden").html(r).prepend('<span class="glyphicon glyphicon-exclamation-sign"></span>');
 			},
-                        success: function(data) {
+            success: function(data) {
 				var obj = $.parseJSON(data.responseText);
 				if((obj.status && obj.data) && obj.status=='success'){
 					$("#rawTransactionStatus").addClass('alert-success').removeClass('alert-danger').removeClass("hidden").html(' Txid: '+obj.data);
@@ -858,17 +880,14 @@ $(document).ready(function() {
 			data: {"rawtx":$("#rawTransaction").val()},
 			dataType: "json",
 			error: function(data) {
-				var obj = $.parseJSON(data.responseText);
-				var r = ' ';
-				r += (obj.data) ? obj.data : '';
-				r += (obj.message) ? ' '+obj.message : '';
+				var r = data.responseText;
 				r = (r!='') ? r : ' Failed to broadcast'; // build response 
 				$("#rawTransactionStatus").addClass('alert-danger').removeClass('alert-success').removeClass("hidden").html(r).prepend('<span class="glyphicon glyphicon-exclamation-sign"></span>');
 			},
             success: function(data) {
-				var obj = $.parseJSON(data.responseText);
-				if(obj.length > 0){
-					$("#rawTransactionStatus").addClass('alert-success').removeClass('alert-danger').removeClass("hidden").html(' TxID: '+obj.txid);
+                console.log(data);
+				if(data.txid){
+					$("#rawTransactionStatus").addClass('alert-success').removeClass('alert-danger').removeClass("hidden").html(' TxID: '+data.txid);
 				} else {
 					$("#rawTransactionStatus").addClass('alert-danger').removeClass('alert-success').removeClass("hidden").html(' Unexpected error, please try again').prepend('<span class="glyphicon glyphicon-exclamation-sign"></span>');
 				}
@@ -1309,29 +1328,7 @@ $(document).ready(function() {
 	});
 
 	function configureBroadcast(){
-		var host = $("#coinjs_broadcast option:selected").val();
-		$("#rawSubmitBtn").unbind("");
-		if(host=="blockr.io_litecoin"){
-			$("#rawSubmitBtn").click(function(){
-				rawSubmitBlockrio_litecoin(this)
-			});
-		} else if(host=="blockr.io_bitcoinmainnet"){
-			$("#rawSubmitBtn").click(function(){
-				rawSubmitBlockrio_BitcoinMainnet(this);
-			});
-		} else if(host=="piggycoin"){
-			$("#rawSubmitBtn").click(function(){
-				rawSubmitPiggyCoinMainnet(this);
-			});
-		} else if(host=="false"){
-			$("#rawSubmitBtn").click(function(){
-				rawSubmitDefault(this); // revert to default
-			});
-		} else {
-			$("#rawSubmitBtn").click(function(){
-				rawSubmitInsightAPI_PiggyCoin(this);
-			});
-		}
+		$("#rawSubmitBtn").attr('rel',$("#coinjs_broadcast option:selected").val());
 	}
 
 	function configureGetUnspentTx(){
