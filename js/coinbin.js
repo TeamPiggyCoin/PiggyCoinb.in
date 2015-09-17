@@ -26,7 +26,7 @@ $(document).ready(function() {
 					var keys = coinjs.newKeys(s);
 
 					$("#walletAddress").html(keys.address);
-					$("#walletHistory").attr('href','https://btc.blockr.io/address/info/'+keys.address);
+					$("#walletHistory").attr('href','https://chainz.cryptoid.info/piggy/address.dws?'+keys.address);
 
 					$("#walletQrCode").html("");
 					var qrcode = new QRCode("walletQrCode");
@@ -63,7 +63,7 @@ $(document).ready(function() {
 		$("#openWallet").addClass("hidden").show();
 
 		$("#walletAddress").html("");
-		$("#walletHistory").attr('href','https://btc.blockr.io/address/info/');
+		$("#walletHistory").attr('href','https://chainz.cryptoid.info/piggy/');
 
 		$("#walletQrCode").html("");
 		var qrcode = new QRCode("walletQrCode");
@@ -217,19 +217,23 @@ $(document).ready(function() {
 	});
 
 	function walletBalance(){
-		var tx = coinjs.transaction();
 		$("#walletLoader").removeClass("hidden");
-		coinjs.addressBalance($("#walletAddress").html(),function(data){
-			if($(data).find("result").text()==1){
-				var v = $(data).find("balance").text()/100000000;
-				$("#walletBalance").html(v+" BTC").attr('rel',v).fadeOut().fadeIn();
-			} else {
-				$("#walletBalance").html("0.00 BTC").attr('rel',v).fadeOut().fadeIn();
-			}
 
-			$("#walletLoader").addClass("hidden");
+        $.ajax ({
+			type: "GET",
+			url: "http://172.245.32.43:3000/api/addr/"+$("#walletAddress").html()+"/balance",
+			dataType: "json",
+			error: function(data) {
+                $("#walletBalance").html("0.00 PIGGY").attr('rel',0).fadeOut().fadeIn();
+			},
+			success: function(data) {
+                v = data/100000000;
+                $("#walletBalance").html(v+" PIGGY").attr('rel',v).fadeOut().fadeIn();
+			}
 		});
-	}
+
+        $("#walletLoader").addClass("hidden");
+    }
 
 	function checkBalanceLoop(){
 		setTimeout(function(){
@@ -885,7 +889,6 @@ $(document).ready(function() {
 				$("#rawTransactionStatus").addClass('alert-danger').removeClass('alert-success').removeClass("hidden").html(r).prepend('<span class="glyphicon glyphicon-exclamation-sign"></span>');
 			},
             success: function(data) {
-                console.log(data);
 				if(data.txid){
 					$("#rawTransactionStatus").addClass('alert-success').removeClass('alert-danger').removeClass("hidden").html(' TxID: '+data.txid);
 				} else {
