@@ -302,8 +302,20 @@
 					<div class="tab-pane tab-content" id="newMultiSig">
 						<h2>New Multisig Address <small>Secure multisig address</small></h2>
 
-						<p>Public keys can be <a href="#newAddress">generated in your browser</a> or from your bitcoin client</a>.</p>
-						<p>Enter the public keys of all the participants, to create a <a href="https://en.bitcoin.it/wiki/Address#Multi-signature_addresses" target="_blank">multi signature address</a>. Maximum of 15 allowed. Compressed and uncompressed public keys are accepted.</p>
+						<div class="row">
+
+							<div class="col-md-8">
+								<p>Public keys can be <a href="#newAddress">generated in your browser</a> or from your bitcoin client</a>.</p>
+								<p>Enter the public keys of all the participants, to create a <a href="https://en.bitcoin.it/wiki/Address#Multi-signature_addresses" target="_blank">multi signature address</a>. Maximum of 15 allowed. Compressed and uncompressed public keys are accepted.</p>
+							</div>
+
+							<div class="col-md-3">
+								<p class="alert alert-info"><span class="glyphicon glyphicon-info-sign"></span> <a href="javascript:;" data-toggle="modal" data-target="#modalMediator"><abbr>Need a Mediator?</abbr></a></p>
+							</div>
+
+							<div class="col-md-1">
+							</div>
+						</div>
 
 						<div id="multisigPubKeys" class="row">
 							<div class="form-horizontal">
@@ -542,6 +554,8 @@
 						</div>
 
 						<br>
+
+						<div id="transactionCreateStatus" class="alert alert-danger hidden"></div>
 
 						<div id="transactionCreate" class="alert alert-success hidden">
 							<label>Transaction</label>
