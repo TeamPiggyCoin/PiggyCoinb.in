@@ -3,9 +3,9 @@ coinbin
 
 A Open Source Browser Based cryptocurrency Wallet. Version 1.2 beta by OutCast3k, ported to PiggyCoin by neurocis.
 
-Live version available at https://piggy-coin.com/coinbin
+Live version available at https://piggy-coin.com/PiggyCoinb.in
 
-Github URL: https://github.com/TeamPiggyCoin/coinbin/
+Github URL: https://github.com/TeamPiggyCoin/PiggyCoinb.in/
 
 Coinb.in supports a number of key features such as: 
 
