@@ -781,7 +781,7 @@ $(document).ready(function() {
 	function listUnspentInsightAPI_PiggyCoin(redeem){
 		$.ajax ({
 			type: "GET",
-			url: "http://172.245.32.43:3000/api/addr/"+redeem.addr+"/utxo",
+			url: "https://www.piggy-coin.com/api/addr/"+redeem.addr+"/utxo",
 			dataType: "json",
 			error: function(data) {
 				$("#redeemFromStatus").removeClass('hidden').html('<span class="glyphicon glyphicon-exclamation-sign"></span> Unexpected error, unable to retrieve unspent outputs!');
@@ -983,7 +983,7 @@ $(document).ready(function() {
 		$(thisbtn).val('Please wait, loading...').attr('disabled',true);
 		$.ajax ({
 			type: "POST",
-			url: "http://172.245.32.43:3000/api/tx/send",
+			url: "https://www.piggy-coin.com/api/tx/send",
 			data: {"rawtx":$("#rawTransaction").val()},
 			dataType: "json",
 			error: function(data) {
